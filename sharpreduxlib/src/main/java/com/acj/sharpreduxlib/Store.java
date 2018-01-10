@@ -14,15 +14,11 @@ import java.util.List;
 
 public class Store<T> {
 
-    private Store(){};
-
-    private static class SingletonHolder{
-        private static Store instance = new Store();
+    public Store() {
     }
 
-    public static final Store getInstance(){
-        return SingletonHolder.instance;
-    }
+    ;
+
 
     private T currentState;
     private Reducer currentReducer;
@@ -117,8 +113,6 @@ public class Store<T> {
         for (BaseListener listener : listeners) {
             listener.onStateChanged();
         }
-
-        return;
     }
 
     public void replaceReducer(@NonNull Reducer reducerToReplace){

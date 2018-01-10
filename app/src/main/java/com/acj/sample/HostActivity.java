@@ -2,6 +2,7 @@ package com.acj.sample;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.UiThread;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -12,16 +13,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.acj.sharpreduxlib.Store;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class HostActivity extends AppCompatActivity implements IContract.IView{
 
+
     private ListView taskListView;
-    private List<Task> taskList;
     private TaskListAdapter taskListAdapter;
 
     private IContract.IPresenter presenter;
@@ -33,33 +37,34 @@ public class HostActivity extends AppCompatActivity implements IContract.IView{
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
+        presenter = new HostPresenter(this);
         initView();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Task task = new Task("newTask");
-
+                presenter.addTask();
             }
         });
 
-        presenter = new HostPresenter(this);
-
     }
-
 
     private void initView(){
         taskListView = (ListView) findViewById(R.id.task_listview);
-        taskList = new ArrayList<>();
-        taskListAdapter = new TaskListAdapter(this, taskList);
+        taskListAdapter = new TaskListAdapter(this, TaskDataStore.getInstance().getStore().getCurrentState().taskList);
         taskListView.setAdapter(taskListAdapter);
     }
 
     @Override
-    public void setPresenter(IContract.IPresenter presenter) {
-        this.presenter = presenter;
+    public void onDataChanged(final TaskData data) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                taskListAdapter.setTasks(data.taskList);
+                taskListAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
 
@@ -71,6 +76,10 @@ public class HostActivity extends AppCompatActivity implements IContract.IView{
         public TaskListAdapter(Context context, List<Task> list){
             this.context = context;
             this.tasks = list;
+        }
+
+        public void setTasks(List<Task> tasks) {
+            this.tasks = tasks;
         }
 
         public List<Task> getTasks() {
@@ -93,14 +102,15 @@ public class HostActivity extends AppCompatActivity implements IContract.IView{
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
 
             ViewHolder viewHolder;
             if (convertView == null) {
-                convertView = LayoutInflater.from(context).inflate(R.layout.layout_item, parent);
+                convertView = LayoutInflater.from(context).inflate(R.layout.layout_item, parent, false);
                 viewHolder = new ViewHolder();
                 viewHolder.taskTxtView = (TextView) convertView.findViewById(R.id.task_name_txt);
                 viewHolder.taskCheckBox = (CheckBox) convertView.findViewById(R.id.task_complete_checkbox);
+
                 convertView.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) convertView.getTag();
@@ -108,6 +118,12 @@ public class HostActivity extends AppCompatActivity implements IContract.IView{
 
             viewHolder.taskTxtView.setText(tasks.get(position).taskName);
             viewHolder.taskCheckBox.setChecked(tasks.get(position).isCompleted);
+            viewHolder.taskCheckBox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    presenter.setTaskComplete(position);
+                }
+            });
             return convertView;
         }
 

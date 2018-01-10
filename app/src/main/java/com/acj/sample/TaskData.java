@@ -1,5 +1,6 @@
 package com.acj.sample;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,4 +9,9 @@ import java.util.List;
 
 public class TaskData {
 
+    public List<Task> taskList;
+
+    public TaskData() {
+        taskList = new ArrayList<>();
+    }
 }

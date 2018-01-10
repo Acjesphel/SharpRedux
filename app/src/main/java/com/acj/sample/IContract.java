@@ -7,10 +7,12 @@ package com.acj.sample;
 public class IContract {
 
     public interface IView{
-        public void setPresenter(IPresenter presenter);
+        void onDataChanged(TaskData data);
     }
 
     public interface IPresenter{
+        void addTask();
 
+        void setTaskComplete(int pos);
     }
 }
